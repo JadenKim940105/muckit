@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import me.summerbell.muckit.accounts.AccountRepository;
+import me.summerbell.muckit.accounts.AccountSaveService;
+import me.summerbell.muckit.domain.Account;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -12,25 +15,44 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class KakaoLoginService {
+public class KakaoLoginService implements AccountSaveService {
 
     private final ObjectMapper objectMapper;
+    private final AccountRepository accountRepository;
+
+
+    public String loginProcess(String authrizationCode){
+        String accessToken = "";
+        try {
+            accessToken = getAccessToken(authrizationCode);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String userKakaoId = "";
+        try {
+            userKakaoId = getUserKakaoId(accessToken);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return userKakaoId;
+    }
 
     public String getAccessToken(String authrizationCode) throws IOException {
         HttpURLConnection connection = setConnectionForToken();
-        return requestForToken(authrizationCode, connection);
+        String response = requestForToken(authrizationCode, connection);
+        return response;
     }
 
     public String getUserKakaoId(String accessToken) throws IOException {
         HttpURLConnection connection = setConnectionForKakaoId(accessToken);
-        return requestForKakaoId(connection);
+        String response = requestForKakaoId(connection);
+        return response;
     }
-
-
-
 
 
     private HttpURLConnection setConnectionForToken() throws IOException {
@@ -57,7 +79,7 @@ public class KakaoLoginService {
     private void setRequestParamForToken(String authrizationCode, OutputStreamWriter writer) throws IOException {
         writer.append("grant_type=authorization_code" +
                 "&client_id=4d27640b59df7c07ae902a2cb443aad6" +
-                "&redirect_uri=http://localhost:8080/authrizationcode" +
+                "&redirect_uri=http://localhost:8080/accounts/login" +
                 "&code="+authrizationCode);
     }
 
@@ -91,9 +113,6 @@ public class KakaoLoginService {
     }
 
 
-
-
-
     private String getResponse(BufferedReader br) throws IOException {
         String line = "";
         String responseBody = "";
@@ -102,5 +121,20 @@ public class KakaoLoginService {
             responseBody += line;
         }
         return responseBody;
+    }
+
+
+    @Override
+    public Optional<Account> saveAccount(String userNumber) {
+        Optional<Account> check = accountRepository.findByUserNumber(userNumber);
+        Account savedAccount = check.orElseGet(() -> {
+            Account account = Account.builder()
+                    .userNumber(userNumber)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            Account newAccount = accountRepository.save(account);
+            return newAccount;
+        });
+        return Optional.of(savedAccount);
     }
 }
