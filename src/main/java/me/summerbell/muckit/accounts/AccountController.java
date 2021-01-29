@@ -21,8 +21,6 @@ public class AccountController {
     @GetMapping("/accounts/login")
     public String getCode(@RequestParam String code) {
         String kakaoId = kakaoLoginService.loginProcess(code);
-        kakaoLoginService.saveAccount(kakaoId);
-
         return "/index";
     }
 

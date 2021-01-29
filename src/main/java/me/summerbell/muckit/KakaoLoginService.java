@@ -1,140 +1,131 @@
 package me.summerbell.muckit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import me.summerbell.muckit.accounts.AccountRepository;
-import me.summerbell.muckit.accounts.AccountSaveService;
+import me.summerbell.muckit.accounts.AccountService;
 import me.summerbell.muckit.domain.Account;
+import me.summerbell.muckit.utils.AccountRole;
+import me.summerbell.muckit.utils.KakaoAccessToken;
+import me.summerbell.muckit.utils.KakaoUserInfo;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class KakaoLoginService implements AccountSaveService {
+public class KakaoLoginService  {
+
 
     private final ObjectMapper objectMapper;
     private final AccountRepository accountRepository;
+    private final AccountService accountService;
 
 
     public String loginProcess(String authrizationCode){
-        String accessToken = "";
-        try {
-            accessToken = getAccessToken(authrizationCode);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String userKakaoId = "";
-        try {
-            userKakaoId = getUserKakaoId(accessToken);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return userKakaoId;
+
+        KakaoAccessToken kakaoAccessToken = getAccessToken(authrizationCode);
+        KakaoUserInfo kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken.getAccess_token());
+        // 카카오 로그인시 자동으로 DB 등록 (없을시에)
+        saveAccountIfNotExist(kakaoUserInfo);
+
+
+        return null;
     }
 
-    public String getAccessToken(String authrizationCode) throws IOException {
-        HttpURLConnection connection = setConnectionForToken();
-        String response = requestForToken(authrizationCode, connection);
-        return response;
-    }
-
-    public String getUserKakaoId(String accessToken) throws IOException {
-        HttpURLConnection connection = setConnectionForKakaoId(accessToken);
-        String response = requestForKakaoId(connection);
-        return response;
-    }
-
-
-    private HttpURLConnection setConnectionForToken() throws IOException {
-        String requestURL = "https://kauth.kakao.com/oauth/token";
-        URL url = new URL(requestURL);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-        connection.setRequestMethod("POST");
-        connection.setDoOutput(true);
-        return connection;
-    }
-
-    private String requestForToken(String authrizationCode, HttpURLConnection connection) throws IOException {
-        try(OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream())){
-            setRequestParamForToken(authrizationCode, writer);
-            writer.flush();
-            try(BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))){
-                String responseBody = getResponse(br);
-                return extractAccessToken(responseBody);
-            }
-        }
-    }
-
-    private void setRequestParamForToken(String authrizationCode, OutputStreamWriter writer) throws IOException {
-        writer.append("grant_type=authorization_code" +
-                "&client_id=4d27640b59df7c07ae902a2cb443aad6" +
-                "&redirect_uri=http://localhost:8080/accounts/login" +
-                "&code="+authrizationCode);
-    }
-
-    private String extractAccessToken(String responseBody) throws JsonProcessingException {
-        JsonNode jsonNode = objectMapper.readTree(responseBody);
-        return jsonNode.get("access_token").asText();
-    }
-
-
-
-
-    private HttpURLConnection setConnectionForKakaoId(String accessToken) throws IOException {
-        String requestURL = "https://kapi.kakao.com/v2/user/me";
-        URL url = new URL(requestURL);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Authorization", "Bearer " + accessToken);
-        return connection;
-    }
-
-    private String requestForKakaoId(HttpURLConnection connection) throws IOException{
-        try(BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))){
-            String responseBody = getResponse(br);
-            return extractKakaoId(responseBody);
-        }
-    }
-
-    private String extractKakaoId(String responseBody) throws JsonProcessingException {
-        return objectMapper.readTree(responseBody).get("id").asText();
-    }
-
-
-    private String getResponse(BufferedReader br) throws IOException {
-        String line = "";
-        String responseBody = "";
-
-        while ((line=br.readLine())!=null){
-            responseBody += line;
-        }
-        return responseBody;
-    }
-
-
-    @Override
-    public Optional<Account> saveAccount(String userNumber) {
-        Optional<Account> check = accountRepository.findByUserNumber(userNumber);
-        Account savedAccount = check.orElseGet(() -> {
-            Account account = Account.builder()
-                    .userNumber(userNumber)
+    private void saveAccountIfNotExist(KakaoUserInfo userInfo) {
+        Optional<Account> account = accountRepository.findByEmail(userInfo.getKakao_account().getEmail());
+        if(account.isEmpty()){
+            Account newAccount = Account.builder()
+                    .accountId(userInfo.getKakao_account().getEmail()+"_"+userInfo.getId())
+                    .email(userInfo.getKakao_account().getEmail())
+                    .password("??")
                     .createdAt(LocalDateTime.now())
+                    .isOauth(true)
+                    .role(AccountRole.USER)
+                    .nickName(userInfo.properties.getNickname())
                     .build();
-            Account newAccount = accountRepository.save(account);
-            return newAccount;
-        });
-        return Optional.of(savedAccount);
+            accountService.createNewAccount(newAccount);
+        }
+    }
+
+    private KakaoAccessToken getAccessToken(String authrizationCode){
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        //Http header 객체생성
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        //Http body 객체생성
+        //todo client_id & redirect_uri => enum 으로
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type","authorization_code");
+        params.add("client_id","4d27640b59df7c07ae902a2cb443aad6");
+        params.add("redirect_uri", "http://localhost:8080/accounts/login");
+        params.add("code", authrizationCode);
+
+        //Http header 객체와 Http body 객체를 하나의 오브젝트(Http entity)에 담기
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(params, headers);
+
+        // Http 요청하기 (parameter: 요청주소, 요청 method, 요청 header&body 를 담은 httpEntity, 반환값타입)
+        // todo 요청 uri enum 으로
+        ResponseEntity<String> response = restTemplate.exchange(
+                "https://kauth.kakao.com/oauth/token",
+                HttpMethod.POST,
+                tokenRequest,
+                String.class
+        );
+
+        // response 받은 json 데이터 매핑
+        KakaoAccessToken kakaoAccessToken = null;
+        try {
+            kakaoAccessToken = objectMapper.readValue(response.getBody(), KakaoAccessToken.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return kakaoAccessToken;
+    }
+
+    private KakaoUserInfo getKakaoUserInfo(String accessToken){
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        // Http header
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+        headers.add("Authorization", "Bearer " + accessToken);
+
+        // 요청객체(HttpEntity)
+        HttpEntity<MultiValueMap<String, String>> kakaoUserInfoRequest = new HttpEntity<>(headers);
+
+        // 요청( restTemplate.exchange() ) 후 응답받기(ResponseEntity)
+        // todo 요청 uri enum 으로
+        ResponseEntity<String> response = restTemplate.exchange(
+                "https://kapi.kakao.com//v2/user/me",
+                HttpMethod.POST,
+                kakaoUserInfoRequest,
+                String.class
+        );
+
+        KakaoUserInfo kakaoUserInfo = null;
+        try {
+            kakaoUserInfo = objectMapper.readValue(response.getBody(), KakaoUserInfo.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return kakaoUserInfo;
+
     }
 }
