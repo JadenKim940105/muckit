@@ -20,8 +20,13 @@ public class AccountController {
 
     @GetMapping("/accounts/login")
     public String getCode(@RequestParam String code) {
-        String kakaoId = kakaoLoginService.loginProcess(code);
+        kakaoLoginService.loginProcess(code);
         return "/index";
+    }
+
+    @GetMapping("/logintest")
+    public String test(){
+        return "/test";
     }
 
 

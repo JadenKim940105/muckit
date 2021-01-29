@@ -31,18 +31,20 @@ public class KakaoLoginService  {
     private final AccountService accountService;
 
 
-    public String loginProcess(String authrizationCode){
+
+    public void loginProcess(String authrizationCode){
 
         KakaoAccessToken kakaoAccessToken = getAccessToken(authrizationCode);
         KakaoUserInfo kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken.getAccess_token());
         // 카카오 로그인시 자동으로 DB 등록 (없을시에)
-        saveAccountIfNotExist(kakaoUserInfo);
+        Account account = saveAccountIfNotExist(kakaoUserInfo);
+        // 로그인 처리
+        accountService.login(account);
 
-
-        return null;
     }
 
-    private void saveAccountIfNotExist(KakaoUserInfo userInfo) {
+    private Account saveAccountIfNotExist(KakaoUserInfo userInfo) {
+        //todo password 외부설정하기
         Optional<Account> account = accountRepository.findByEmail(userInfo.getKakao_account().getEmail());
         if(account.isEmpty()){
             Account newAccount = Account.builder()
@@ -55,6 +57,9 @@ public class KakaoLoginService  {
                     .nickName(userInfo.properties.getNickname())
                     .build();
             accountService.createNewAccount(newAccount);
+            return newAccount;
+        } else {
+            return account.get();
         }
     }
 
@@ -67,7 +72,7 @@ public class KakaoLoginService  {
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
         //Http body 객체생성
-        //todo client_id & redirect_uri => enum 으로
+        //todo client_id & redirect_uri => 외부설정하기
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type","authorization_code");
         params.add("client_id","4d27640b59df7c07ae902a2cb443aad6");
@@ -78,7 +83,7 @@ public class KakaoLoginService  {
         HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(params, headers);
 
         // Http 요청하기 (parameter: 요청주소, 요청 method, 요청 header&body 를 담은 httpEntity, 반환값타입)
-        // todo 요청 uri enum 으로
+        // todo 요청 uri 외부설정하기
         ResponseEntity<String> response = restTemplate.exchange(
                 "https://kauth.kakao.com/oauth/token",
                 HttpMethod.POST,
@@ -110,7 +115,7 @@ public class KakaoLoginService  {
         HttpEntity<MultiValueMap<String, String>> kakaoUserInfoRequest = new HttpEntity<>(headers);
 
         // 요청( restTemplate.exchange() ) 후 응답받기(ResponseEntity)
-        // todo 요청 uri enum 으로
+        // todo 요청 외부설정하기
         ResponseEntity<String> response = restTemplate.exchange(
                 "https://kapi.kakao.com//v2/user/me",
                 HttpMethod.POST,
