@@ -1,7 +1,7 @@
 package me.summerbell.muckit.accounts;
 
 import lombok.RequiredArgsConstructor;
-import me.summerbell.muckit.KakaoLoginService;
+import me.summerbell.muckit.utils.kakaologin.KakaoLoginService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,19 +14,19 @@ public class AccountController {
 
     @GetMapping("/accounts/loginForm")
     public String loginForm() {
-        return "/login";
+        return "login";
     }
 
 
     @GetMapping("/accounts/login")
     public String getCode(@RequestParam String code) {
         kakaoLoginService.loginProcess(code);
-        return "/index";
+        return "index";
     }
 
     @GetMapping("/logintest")
     public String test(){
-        return "/test";
+        return "test";
     }
 
 

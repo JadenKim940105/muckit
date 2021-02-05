@@ -1,4 +1,4 @@
-package me.summerbell.muckit.utils;
+package me.summerbell.muckit.utils.kakaologin;
 
 import lombok.Data;
 

@@ -1,4 +1,4 @@
-package me.summerbell.muckit;
+package me.summerbell.muckit.utils.kakaologin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,8 +7,6 @@ import me.summerbell.muckit.accounts.AccountRepository;
 import me.summerbell.muckit.accounts.AccountService;
 import me.summerbell.muckit.domain.Account;
 import me.summerbell.muckit.utils.AccountRole;
-import me.summerbell.muckit.utils.KakaoAccessToken;
-import me.summerbell.muckit.utils.KakaoUserInfo;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -29,6 +27,7 @@ public class KakaoLoginService  {
     private final ObjectMapper objectMapper;
     private final AccountRepository accountRepository;
     private final AccountService accountService;
+    private final KakaoLoginProperties kakaoLoginProperties;
 
 
 
@@ -44,13 +43,12 @@ public class KakaoLoginService  {
     }
 
     private Account saveAccountIfNotExist(KakaoUserInfo userInfo) {
-        //todo password 외부설정하기
         Optional<Account> account = accountRepository.findByEmail(userInfo.getKakao_account().getEmail());
         if(account.isEmpty()){
             Account newAccount = Account.builder()
                     .accountId(userInfo.getKakao_account().getEmail()+"_"+userInfo.getId())
                     .email(userInfo.getKakao_account().getEmail())
-                    .password("??")
+                    .password(kakaoLoginProperties.getPassword())
                     .createdAt(LocalDateTime.now())
                     .isOauth(true)
                     .role(AccountRole.USER)
@@ -72,20 +70,18 @@ public class KakaoLoginService  {
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
         //Http body 객체생성
-        //todo client_id & redirect_uri => 외부설정하기
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type","authorization_code");
-        params.add("client_id","4d27640b59df7c07ae902a2cb443aad6");
-        params.add("redirect_uri", "http://localhost:8080/accounts/login");
+        params.add("grant_type",kakaoLoginProperties.getGrantType());
+        params.add("client_id",kakaoLoginProperties.getClientId());
+        params.add("redirect_uri", kakaoLoginProperties.getRedirectUriForAccessToken());
         params.add("code", authrizationCode);
 
         //Http header 객체와 Http body 객체를 하나의 오브젝트(Http entity)에 담기
         HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(params, headers);
 
         // Http 요청하기 (parameter: 요청주소, 요청 method, 요청 header&body 를 담은 httpEntity, 반환값타입)
-        // todo 요청 uri 외부설정하기
         ResponseEntity<String> response = restTemplate.exchange(
-                "https://kauth.kakao.com/oauth/token",
+                kakaoLoginProperties.getRequestUriForAccessToken(),
                 HttpMethod.POST,
                 tokenRequest,
                 String.class
@@ -115,9 +111,8 @@ public class KakaoLoginService  {
         HttpEntity<MultiValueMap<String, String>> kakaoUserInfoRequest = new HttpEntity<>(headers);
 
         // 요청( restTemplate.exchange() ) 후 응답받기(ResponseEntity)
-        // todo 요청 외부설정하기
         ResponseEntity<String> response = restTemplate.exchange(
-                "https://kapi.kakao.com//v2/user/me",
+                kakaoLoginProperties.getRequestUriForUserInfo(),
                 HttpMethod.POST,
                 kakaoUserInfoRequest,
                 String.class
