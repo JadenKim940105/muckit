@@ -73,6 +73,30 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.34.1</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>jaden9833/muckit</name>
+                            <build>
+                                <dockerFileDir>${basedir}</dockerFileDir>
+                            </build>
+                        </image>
+                    </images>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>docker-build</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
