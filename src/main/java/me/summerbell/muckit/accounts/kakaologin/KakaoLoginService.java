@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import me.summerbell.muckit.accounts.AccountRepository;
+import me.summerbell.muckit.accounts.AccountResponseDto;
 import me.summerbell.muckit.accounts.AccountService;
 import me.summerbell.muckit.domain.Account;
 import me.summerbell.muckit.utils.AccountRole;
@@ -31,14 +32,23 @@ public class KakaoLoginService  {
 
 
 
-    public void loginProcess(String authrizationCode){
+
+    public AccountResponseDto loginProcess(String authrizationCode){
 
         KakaoAccessToken kakaoAccessToken = getAccessToken(authrizationCode);
         KakaoUserInfo kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken.getAccess_token());
         // 카카오 로그인시 자동으로 DB 등록 (없을시에)
         Account account = saveAccountIfNotExist(kakaoUserInfo);
         // 로그인 처리
-        accountService.login(account);
+        Account loginAccount = accountService.login(account);
+        AccountResponseDto accountResponseDto = AccountResponseDto.builder()
+                .accountId(loginAccount.getAccountId())
+                .nickName(loginAccount.getNickName())
+                .email(loginAccount.getEmail())
+                .build();
+        return accountResponseDto;
+
+
 
     }
 

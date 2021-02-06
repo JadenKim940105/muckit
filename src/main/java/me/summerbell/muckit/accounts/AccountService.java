@@ -25,12 +25,13 @@ public class AccountService {
         return newAccount;
     }
 
-    public void login(Account account) {
+    public Account login(Account account) {
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
                 account.getAccountId(),
                 account.getPassword(),
                 List.of(new SimpleGrantedAuthority("ROLE_USER")));
         SecurityContext context = SecurityContextHolder.getContext();
         context.setAuthentication(token);
+        return account;
     }
 }
