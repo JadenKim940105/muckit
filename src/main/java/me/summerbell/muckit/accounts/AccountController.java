@@ -1,6 +1,5 @@
 package me.summerbell.muckit.accounts;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import me.summerbell.muckit.accounts.kakaologin.KakaoLoginService;
@@ -25,20 +24,11 @@ public class AccountController {
 
     @GetMapping("/accounts/login")
     @ResponseBody
-    public String getCode(@RequestParam String code) {
-        AccountResponseDto accountResponseDto = kakaoLoginService.loginProcess(code);
-        String response = "";
-        try {
-             response = objectMapper.writeValueAsString(accountResponseDto);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+    public String getToken(@RequestParam String code) {
+        // todo response 어떻게 할지 고민 할것..
+        String jwtToken  = kakaoLoginService.loginProcess(code);
+        String response = "Bearer " + jwtToken;
         return response;
-    }
-
-    @GetMapping("/logintest")
-    public String test(){
-        return "test";
     }
 
 

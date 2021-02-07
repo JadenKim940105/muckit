@@ -1,10 +1,12 @@
 package me.summerbell.muckit.accounts.kakaologin;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import me.summerbell.muckit.accounts.AccountRepository;
-import me.summerbell.muckit.accounts.AccountResponseDto;
 import me.summerbell.muckit.accounts.AccountService;
 import me.summerbell.muckit.domain.Account;
 import me.summerbell.muckit.utils.AccountRole;
@@ -18,10 +20,12 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class KakaoLoginService  {
 
 
@@ -32,28 +36,27 @@ public class KakaoLoginService  {
 
 
 
-
-    public AccountResponseDto loginProcess(String authrizationCode){
+    public String loginProcess(String authrizationCode){
 
         KakaoAccessToken kakaoAccessToken = getAccessToken(authrizationCode);
         KakaoUserInfo kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken.getAccess_token());
         // 카카오 로그인시 자동으로 DB 등록 (없을시에)
         Account account = saveAccountIfNotExist(kakaoUserInfo);
-        // 로그인 처리
-        Account loginAccount = accountService.login(account);
-        AccountResponseDto accountResponseDto = AccountResponseDto.builder()
-                .accountId(loginAccount.getAccountId())
-                .nickName(loginAccount.getNickName())
-                .email(loginAccount.getEmail())
-                .build();
-        return accountResponseDto;
+        log.info(account.getNickName() + " 저장 완료 ");
 
+        // jwt 토큰을 response 해준다.
+        String jwtToken = JWT.create()
+                .withSubject("cos토큰")
+                .withExpiresAt(new Date(System.currentTimeMillis()+(60000*10)))
+                .withClaim("id", account.getAccountId())
+                .sign(Algorithm.HMAC512("cos"));
 
-
+        return jwtToken;
     }
 
+
     private Account saveAccountIfNotExist(KakaoUserInfo userInfo) {
-        Optional<Account> account = accountRepository.findByEmail(userInfo.getKakao_account().getEmail());
+        Optional<Account> account = accountRepository.findByAccountId(userInfo.getKakao_account().getEmail()+"_"+userInfo.getId());
         if(account.isEmpty()){
             Account newAccount = Account.builder()
                     .accountId(userInfo.getKakao_account().getEmail()+"_"+userInfo.getId())

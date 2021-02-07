@@ -1,18 +1,14 @@
 package me.summerbell.muckit.accounts;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import me.summerbell.muckit.domain.Account;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AccountService {
 
     private final AccountRepository accountRepository;
@@ -23,15 +19,5 @@ public class AccountService {
         account.setPassword(passwordEncoder.encode(account.getPassword()));
         Account newAccount = accountRepository.save(account);
         return newAccount;
-    }
-
-    public Account login(Account account) {
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-                account.getAccountId(),
-                account.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        SecurityContext context = SecurityContextHolder.getContext();
-        context.setAuthentication(token);
-        return account;
     }
 }
