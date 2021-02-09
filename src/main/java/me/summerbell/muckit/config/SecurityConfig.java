@@ -55,10 +55,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.formLogin().disable();
         http.httpBasic().disable();
         http.authorizeRequests()
-                .mvcMatchers("/accounts/loginForm", "/accounts/login", "/test").permitAll()
+                .mvcMatchers("/accounts/loginForm", "/accounts/login", "/test", "/accounts/api/login").permitAll()
                 .anyRequest().authenticated();
         http.cors();
-
     }
 
     @Bean

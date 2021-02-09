@@ -8,8 +8,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.summerbell.muckit.accounts.AccountRepository;
 import me.summerbell.muckit.accounts.AccountService;
+import me.summerbell.muckit.accounts.JwtTokenDto;
 import me.summerbell.muckit.domain.Account;
 import me.summerbell.muckit.utils.AccountRole;
+import me.summerbell.muckit.utils.JsonWebTokenProperties;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -33,25 +35,54 @@ public class KakaoLoginService  {
     private final AccountRepository accountRepository;
     private final AccountService accountService;
     private final KakaoLoginProperties kakaoLoginProperties;
+    private final JsonWebTokenProperties jsonWebTokenProperties;
 
 
+    public JwtTokenDto loginApiProcess(KakaoAccessToken accessToken){
+        KakaoUserInfo kakaoUserInfo = getKakaoUserInfo(accessToken.getAccess_token());
+        Account account = saveAccountIfNotExist(kakaoUserInfo);
+        log.info(account.getNickName() + " 저장 완료 ");
+        // jwt 토큰 생성
+        JwtTokenDto jwtToken = createJwtToken(account);
+        return jwtToken;
+    }
 
-    public String loginProcess(String authrizationCode){
 
-        KakaoAccessToken kakaoAccessToken = getAccessToken(authrizationCode);
+    public JwtTokenDto loginProcess(String authorizationCode){
+        KakaoAccessToken kakaoAccessToken = getAccessToken(authorizationCode);
+        // todo test 성공시 지워도 되는 부분  -----
+        String kakaotokenJson = "";
+        try {
+            kakaotokenJson = objectMapper.writeValueAsString(kakaoAccessToken);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        log.info("kakao access token : " + kakaotokenJson);
+        // todo test 성공시 지워도 되는 부분 -------
+
         KakaoUserInfo kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken.getAccess_token());
         // 카카오 로그인시 자동으로 DB 등록 (없을시에)
         Account account = saveAccountIfNotExist(kakaoUserInfo);
         log.info(account.getNickName() + " 저장 완료 ");
 
-        // jwt 토큰을 response 해준다.
-        String jwtToken = JWT.create()
-                .withSubject("cos토큰")
-                .withExpiresAt(new Date(System.currentTimeMillis()+(60000*10)))
-                .withClaim("id", account.getAccountId())
-                .sign(Algorithm.HMAC512("cos"));
-
+        // jwt 토큰 생성
+        JwtTokenDto jwtToken = createJwtToken(account);
         return jwtToken;
+    }
+
+    private JwtTokenDto createJwtToken(Account account) {
+        String token = JWT.create()
+                .withSubject(jsonWebTokenProperties.getTokenSubject()) // tokenSubject
+                .withExpiresAt(new Date(System.currentTimeMillis() + jsonWebTokenProperties.getTokenExpireTime())) // tokenExpireTime
+                .withClaim("id", account.getAccountId())
+                .sign(Algorithm.HMAC512(jsonWebTokenProperties.getTokenSecure()));
+
+        JwtTokenDto tokenDto = JwtTokenDto.builder()
+                .key("Authorization")
+                .value(token)
+                .build();
+
+        return tokenDto;
     }
 
 

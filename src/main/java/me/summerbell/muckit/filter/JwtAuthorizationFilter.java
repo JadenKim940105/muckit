@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import me.summerbell.muckit.accounts.AccountRepository;
 import me.summerbell.muckit.accounts.auth.PrincipalDetail;
 import me.summerbell.muckit.domain.Account;
+import me.summerbell.muckit.utils.JsonWebTokenProperties;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,6 +27,7 @@ import java.util.Optional;
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private AccountRepository accountRepository;
+    private JsonWebTokenProperties jsonWebTokenProperties;
 
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, AccountRepository accountRepository) {
         super(authenticationManager);
@@ -43,7 +45,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         }
         // jwt 검증해서 정상사용자인지 확인
         String jwtToken = request.getHeader("Authorization").replace("Bearer ","");
-        String accountId = JWT.require(Algorithm.HMAC512("cos")).build().verify(jwtToken).getClaim("id").asString();
+        String accountId = JWT.require(Algorithm.HMAC512(jsonWebTokenProperties.getTokenSecure())).build().verify(jwtToken).getClaim("id").asString();
 
         // 서명이 정상적으로 됨
         if(accountId != null){

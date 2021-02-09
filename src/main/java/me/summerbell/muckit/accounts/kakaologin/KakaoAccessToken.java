@@ -1,8 +1,9 @@
 package me.summerbell.muckit.accounts.kakaologin;
 
+import lombok.Builder;
 import lombok.Data;
 
-@Data
+@Data @Builder
 public class KakaoAccessToken {
     private String access_token;
     private String token_type;
