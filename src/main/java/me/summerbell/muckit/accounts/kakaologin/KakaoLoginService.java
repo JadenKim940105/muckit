@@ -52,16 +52,6 @@ public class KakaoLoginService  {
 
     public JwtTokenDto loginProcess(String authorizationCode){
         KakaoAccessToken kakaoAccessToken = getAccessToken(authorizationCode);
-        // todo test 성공시 지워도 되는 부분  -----
-        String kakaotokenJson = "";
-        try {
-            kakaotokenJson = objectMapper.writeValueAsString(kakaoAccessToken);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        log.info("kakao access token : " + kakaotokenJson);
-        // todo test 성공시 지워도 되는 부분 -------
-
         KakaoUserInfo kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken.getAccess_token());
         // 카카오 로그인시 자동으로 DB 등록 (없을시에)
         Account account = saveAccountIfNotExist(kakaoUserInfo);
