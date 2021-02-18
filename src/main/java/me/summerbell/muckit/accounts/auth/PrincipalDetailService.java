@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+//todo AccountAuthService 로 이름 변경 해보는 것 고려..
 public class PrincipalDetailService implements UserDetailsService {
+
 
     private final AccountRepository accountRepository;
 

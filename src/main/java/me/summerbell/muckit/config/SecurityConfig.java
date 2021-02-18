@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import me.summerbell.muckit.accounts.AccountRepository;
 import me.summerbell.muckit.accounts.auth.PrincipalDetailService;
 import me.summerbell.muckit.filter.JwtAuthorizationFilter;
+import me.summerbell.muckit.utils.JsonWebTokenProperties;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final PasswordEncoder passwordEncoder;
     private final PrincipalDetailService principalDetailService;
     private final AccountRepository accountRepository;
+    private final JsonWebTokenProperties jsonWebTokenProperties;
 
 
     @Bean
@@ -49,13 +51,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.addFilter(new JwtAuthorizationFilter(authenticationManager(), accountRepository));
+        http.addFilter(new JwtAuthorizationFilter(authenticationManager(), accountRepository, jsonWebTokenProperties));
         http.csrf().disable();
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.formLogin().disable();
         http.httpBasic().disable();
         http.authorizeRequests()
-                .mvcMatchers("/accounts/loginForm", "/accounts/login", "/test", "/accounts/api/login").permitAll()
+                .mvcMatchers("/accounts/loginForm", "/accounts/login", "/accounts/api/login").permitAll()
                 .anyRequest().authenticated();
         http.cors();
     }

@@ -3,6 +3,7 @@ package me.summerbell.muckit.accounts;
 import lombok.RequiredArgsConstructor;
 import me.summerbell.muckit.accounts.kakaologin.KakaoAccessToken;
 import me.summerbell.muckit.accounts.kakaologin.KakaoLoginService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,9 +29,10 @@ public class AccountController {
 
     @PostMapping("/accounts/api/login")
     @ResponseBody
-    public JwtTokenDto createToken(@RequestBody KakaoAccessToken accessToken){
-        JwtTokenDto tokenDto = kakaoLoginService.loginApiProcess(accessToken);
-        return tokenDto;
-    }
+    public ResponseEntity<JwtTokenDto> createToken(@RequestBody KakaoAccessToken accessToken){
 
+        JwtTokenDto tokenDto = kakaoLoginService.loginApiProcess(accessToken);
+        return ResponseEntity.ok(tokenDto);
+
+    }
 }

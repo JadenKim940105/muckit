@@ -39,7 +39,9 @@ public class KakaoLoginService  {
 
 
     public JwtTokenDto loginApiProcess(KakaoAccessToken accessToken){
+        // 카카오에서 유저정보 가져오기
         KakaoUserInfo kakaoUserInfo = getKakaoUserInfo(accessToken.getAccess_token());
+        // jwt 만들기 위한 정보 DB에서 가져오기
         Account account = saveAccountIfNotExist(kakaoUserInfo);
         log.info(account.getNickName() + " 저장 완료 ");
         // jwt 토큰 생성
@@ -79,13 +81,14 @@ public class KakaoLoginService  {
 
         JwtTokenDto tokenDto = JwtTokenDto.builder()
                 .key("Authorization")
-                .value(token)
+                .value("Bearer " + token)
                 .build();
 
         return tokenDto;
     }
 
-
+    // 가져온 카카오유저정보를 서버의 DB와 비교해 없다면, 저장 후 저장된 Account Return
+    // 이미 저장되어있는 정봐면 DB 에서 가져온 Account Return
     private Account saveAccountIfNotExist(KakaoUserInfo userInfo) {
         Optional<Account> account = accountRepository.findByAccountId(userInfo.getKakao_account().getEmail()+"_"+userInfo.getId());
         if(account.isEmpty()){
@@ -141,7 +144,7 @@ public class KakaoLoginService  {
 
         return kakaoAccessToken;
     }
-
+    // 카카오 유저정보
     private KakaoUserInfo getKakaoUserInfo(String accessToken){
 
         RestTemplate restTemplate = new RestTemplate();
@@ -170,6 +173,5 @@ public class KakaoLoginService  {
         }
 
         return kakaoUserInfo;
-
     }
 }
