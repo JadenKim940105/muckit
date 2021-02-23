@@ -12,8 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -33,8 +32,15 @@ class KakaoSearchControllerTest {
         .accept(MediaTypes.HAL_JSON_VALUE+";charset=UTF-8")
         .param("longitude", "127.027610")
         .param("latitude", "37.498095"))
-                .andDo(print());
-
+                .andDo(print())
+                .andExpect(jsonPath("$[0].address_name").exists())
+                .andExpect(jsonPath("$[0].id").exists())
+                .andExpect(jsonPath("$[0].phone").exists())
+                .andExpect(jsonPath("$[0].place_name").exists())
+                .andExpect(jsonPath("$[0].place_url").exists())
+                .andExpect(jsonPath("$[0].road_address_name").exists())
+                .andExpect(jsonPath("$[0].longitude").exists())
+                .andExpect(jsonPath("$[0].latitude").exists());
     }
 
 }
