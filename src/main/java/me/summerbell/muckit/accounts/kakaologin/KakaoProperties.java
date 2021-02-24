@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Getter @Setter
 @Component
 @ConfigurationProperties("kakao.login")
-public class KakaoLoginProperties {
+public class KakaoProperties {
 
     private String password;
 

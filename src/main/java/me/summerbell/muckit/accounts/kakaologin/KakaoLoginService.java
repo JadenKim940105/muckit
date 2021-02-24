@@ -34,7 +34,7 @@ public class KakaoLoginService  {
     private final ObjectMapper objectMapper;
     private final AccountRepository accountRepository;
     private final AccountService accountService;
-    private final KakaoLoginProperties kakaoLoginProperties;
+    private final KakaoProperties kakaoProperties;
     private final JsonWebTokenProperties jsonWebTokenProperties;
 
 
@@ -85,7 +85,7 @@ public class KakaoLoginService  {
             Account newAccount = Account.builder()
                     .accountId(userInfo.getKakao_account().getEmail()+"_"+userInfo.getId())
                     .email(userInfo.getKakao_account().getEmail())
-                    .password(kakaoLoginProperties.getPassword())
+                    .password(kakaoProperties.getPassword())
                     .createdAt(LocalDateTime.now())
                     .isOauth(true)
                     .role(AccountRole.USER)
@@ -108,9 +108,9 @@ public class KakaoLoginService  {
 
         //Http body 객체생성
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type",kakaoLoginProperties.getGrantType());
-        params.add("client_id",kakaoLoginProperties.getClientId());
-        params.add("redirect_uri", kakaoLoginProperties.getRedirectUriForAccessToken());
+        params.add("grant_type", kakaoProperties.getGrantType());
+        params.add("client_id", kakaoProperties.getClientId());
+        params.add("redirect_uri", kakaoProperties.getRedirectUriForAccessToken());
         params.add("code", authrizationCode);
 
         //Http header 객체와 Http body 객체를 하나의 오브젝트(Http entity)에 담기
@@ -118,7 +118,7 @@ public class KakaoLoginService  {
 
         // Http 요청하기 (parameter: 요청주소, 요청 method, 요청 header&body 를 담은 httpEntity, 반환값타입)
         ResponseEntity<String> response = restTemplate.exchange(
-                kakaoLoginProperties.getRequestUriForAccessToken(),
+                kakaoProperties.getRequestUriForAccessToken(),
                 HttpMethod.POST,
                 tokenRequest,
                 String.class
@@ -149,7 +149,7 @@ public class KakaoLoginService  {
 
         // 요청( restTemplate.exchange() ) 후 응답받기(ResponseEntity)
         ResponseEntity<String> response = restTemplate.exchange(
-                kakaoLoginProperties.getRequestUriForUserInfo(),
+                kakaoProperties.getRequestUriForUserInfo(),
                 HttpMethod.POST,
                 kakaoUserInfoRequest,
                 String.class

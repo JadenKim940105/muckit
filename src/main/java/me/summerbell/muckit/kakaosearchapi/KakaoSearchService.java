@@ -1,8 +1,9 @@
-package me.summerbell.muckit.kakaosearchapi.kakaomap;
+package me.summerbell.muckit.kakaosearchapi;
 
 import lombok.RequiredArgsConstructor;
-import me.summerbell.muckit.accounts.kakaologin.KakaoLoginProperties;
+import me.summerbell.muckit.accounts.kakaologin.KakaoProperties;
 import me.summerbell.muckit.domain.Restaurant;
+import me.summerbell.muckit.kakaosearchapi.kakaomap.LocationDto;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -13,21 +14,61 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
 public class KakaoSearchService {
 
-    private final KakaoLoginProperties kakaoLoginProperties;
+    private final KakaoProperties kakaoProperties;
 
-    public ArrayList<Restaurant> keywordSearch(double x, double y){
+
+    public LocationDto findLocationByKeyword(String keyword) throws Exception{
+        //todo RestTemplate 빈으로 등록해서 사용?
+        String queryString = "?query="+ URLEncoder.encode(keyword, StandardCharsets.UTF_8)+"&page=1&size=1";
+
+        URI uri = URI.create("https://dapi.kakao.com/v2/local/search/keyword.json"+queryString);
+
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "KakaoAK "+ kakaoProperties.getClientId());
+        headers.add("Accept", MediaType.APPLICATION_JSON_VALUE);
+        headers.add("Content-Type", MediaType.APPLICATION_FORM_URLENCODED_VALUE + ";charset=UTF-8");
+
+        RequestEntity<String> rq = new RequestEntity<>(headers, HttpMethod.GET, uri);
+        ResponseEntity<String> rs = restTemplate.exchange(rq, String.class);
+
+        JSONParser jsonParser = new JSONParser();
+        JSONObject kakaoData = new JSONObject();
+        JSONArray kakaoDataList;
+
+
+        kakaoData = (JSONObject) jsonParser.parse(rs.getBody());
+
+        kakaoDataList = (JSONArray) kakaoData.get("documents");
+
+        kakaoData = (JSONObject) kakaoDataList.get(0);
+
+        LocationDto locationDto = new LocationDto();
+
+        locationDto.setLongitude(kakaoData.get("x").toString());
+        locationDto.setLatitude(kakaoData.get("y").toString());
+
+        return locationDto;
+    }
+
+    public ArrayList<Restaurant> locationSearch(double x, double y){
 
         RestTemplate restTemplate = new RestTemplate();
 
         // Http header 객체 생성
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "KakaoAK "+kakaoLoginProperties.getClientId());
+        headers.add("Authorization", "KakaoAK "+ kakaoProperties.getClientId());
         headers.add("Accept", MediaType.APPLICATION_JSON_VALUE);
         headers.add("Content-Type", MediaType.APPLICATION_FORM_URLENCODED_VALUE+";charset=UTF-8");
 
@@ -41,7 +82,7 @@ public class KakaoSearchService {
                 .queryParam("radius", 2000)
                 .queryParam("category_group_code", "FD6");
 
-        ResponseEntity response = restTemplate.exchange(
+        ResponseEntity<String> response = restTemplate.exchange(
                 builder.toUriString(),
                 HttpMethod.GET,
                 kakaoKeywordSearchRequest,
@@ -54,7 +95,7 @@ public class KakaoSearchService {
 
         ArrayList<Restaurant> restaurants = new ArrayList<>();
         try {
-             kakaoData = (JSONObject) jsonParser.parse(response.getBody().toString());
+             kakaoData = (JSONObject) jsonParser.parse(response.getBody());
         } catch (ParseException e) {
             e.printStackTrace();
         }
