@@ -9,11 +9,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @Data
-public class PrincipalDetail implements UserDetails {
+public class AccountUser implements UserDetails {
 
     private Account account;
 
-    public PrincipalDetail(Account account) {
+    public AccountUser(Account account) {
         this.account = account;
     }
 
