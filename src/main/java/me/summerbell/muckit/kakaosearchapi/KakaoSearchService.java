@@ -2,8 +2,8 @@ package me.summerbell.muckit.kakaosearchapi;
 
 import lombok.RequiredArgsConstructor;
 import me.summerbell.muckit.accounts.kakaologin.KakaoProperties;
-import me.summerbell.muckit.domain.Restaurant;
-import me.summerbell.muckit.kakaosearchapi.kakaomap.LocationDto;
+import me.summerbell.muckit.kakaosearchapi.dto.LocationDto;
+import me.summerbell.muckit.kakaosearchapi.dto.RestaurantDto;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -62,7 +62,7 @@ public class KakaoSearchService {
         return locationDto;
     }
 
-    public ArrayList<Restaurant> locationSearch(double x, double y){
+    public ArrayList<RestaurantDto> locationSearch(double x, double y){
 
         RestTemplate restTemplate = new RestTemplate();
 
@@ -93,7 +93,7 @@ public class KakaoSearchService {
         JSONObject kakaoData = new JSONObject();
         JSONArray kakaoRestaurantList;
 
-        ArrayList<Restaurant> restaurants = new ArrayList<>();
+        ArrayList<RestaurantDto> restaurantDtos = new ArrayList<>();
         try {
              kakaoData = (JSONObject) jsonParser.parse(response.getBody());
         } catch (ParseException e) {
@@ -102,7 +102,7 @@ public class KakaoSearchService {
         kakaoRestaurantList = (JSONArray) kakaoData.get("documents");
         for(int i = 0 ; i < kakaoRestaurantList.size(); i++){
             JSONObject kakaoRestaurant = (JSONObject) kakaoRestaurantList.get(i);
-            Restaurant restaurant = Restaurant.builder()
+            RestaurantDto restaurantDto = RestaurantDto.builder()
                     .address_name(kakaoRestaurant.get("address_name").toString())
                     .id(kakaoRestaurant.get("id").toString())
                     .phone(kakaoRestaurant.get("phone").toString())
@@ -113,12 +113,12 @@ public class KakaoSearchService {
                     .longitude(kakaoRestaurant.get("x").toString())
                     .latitude(kakaoRestaurant.get("y").toString())
                     .build();
-            restaurants.add(restaurant);
+            restaurantDtos.add(restaurantDto);
         }
 
 
 
-        return restaurants;
+        return restaurantDtos;
 
     }
 }

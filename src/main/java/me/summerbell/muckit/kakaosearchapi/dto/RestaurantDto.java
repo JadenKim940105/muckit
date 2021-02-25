@@ -1,10 +1,10 @@
-package me.summerbell.muckit.domain;
+package me.summerbell.muckit.kakaosearchapi.dto;
 
 import lombok.Builder;
 import lombok.Data;
 
 @Data @Builder
-public class Restaurant {
+public class RestaurantDto {
     private String address_name;
     private String id;
     private String phone;

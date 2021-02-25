@@ -1,4 +1,4 @@
-package me.summerbell.muckit.kakaosearchapi.kakaomap;
+package me.summerbell.muckit.kakaosearchapi.dto;
 
 import lombok.Getter;
 import lombok.Setter;

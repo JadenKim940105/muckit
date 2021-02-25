@@ -2,14 +2,10 @@ package me.summerbell.muckit.kakaosearchapi;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.summerbell.muckit.accounts.auth.AccountUser;
-import me.summerbell.muckit.accounts.auth.CurrentUser;
-import me.summerbell.muckit.domain.Account;
-import me.summerbell.muckit.domain.Restaurant;
-import me.summerbell.muckit.kakaosearchapi.kakaomap.LocationDto;
+import me.summerbell.muckit.kakaosearchapi.dto.LocationDto;
+import me.summerbell.muckit.kakaosearchapi.dto.RestaurantDto;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,7 +25,7 @@ public class KakaoSearchController {
                                              @RequestParam double latitude){
 
 
-        ArrayList<Restaurant> tests = kakaoSearchService.locationSearch(longitude, latitude);
+        ArrayList<RestaurantDto> tests = kakaoSearchService.locationSearch(longitude, latitude);
 
         return ResponseEntity.ok(tests);
     }
