@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class Account {
 
     @Id @GeneratedValue
+    @Column(name = "ACCOUNT_PK")
     private Long id;
 
     @Column(unique = true)
