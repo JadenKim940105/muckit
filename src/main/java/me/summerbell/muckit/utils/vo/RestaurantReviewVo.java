@@ -1,4 +1,4 @@
-package me.summerbell.muckit.kakaosearchapi.dto;
+package me.summerbell.muckit.utils.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Data @Builder
 @NoArgsConstructor @AllArgsConstructor
-public class RestaurantDto {
+public class RestaurantReviewVo {
     private String address_name;
 
     private String kakao_id;
@@ -23,4 +23,6 @@ public class RestaurantDto {
     private String longitude;
 
     private String latitude;
+
+    private String reviewContent;
 }

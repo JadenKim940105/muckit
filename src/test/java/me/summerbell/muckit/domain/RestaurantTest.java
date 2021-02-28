@@ -1,15 +1,12 @@
 package me.summerbell.muckit.domain;
 
-import org.junit.jupiter.api.BeforeEach;
+import me.summerbell.muckit.restaurants.RestaurantRepository;
+import me.summerbell.muckit.reviews.ReviewRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-
-import javax.persistence.EntityManager;
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,7 +27,7 @@ class RestaurantTest {
     @Test
     void restaurant_reviewTest(){
         Restaurant restaurant = new Restaurant();
-        restaurant.setPlace_name("레스토랑1");
+        restaurant.setPlaceName("레스토랑1");
 
         Review review = new Review();
         review.setReviewContent("리뷰1");

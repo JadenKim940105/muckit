@@ -104,7 +104,7 @@ public class KakaoSearchService {
             JSONObject kakaoRestaurant = (JSONObject) kakaoRestaurantList.get(i);
             RestaurantDto restaurantDto = RestaurantDto.builder()
                     .address_name(kakaoRestaurant.get("address_name").toString())
-                    .id(kakaoRestaurant.get("id").toString())
+                    .kakao_id(kakaoRestaurant.get("id").toString())
                     .phone(kakaoRestaurant.get("phone").toString())
                     .place_name(kakaoRestaurant.get("place_name").toString())
                     .place_url(kakaoRestaurant.get("place_url").toString())

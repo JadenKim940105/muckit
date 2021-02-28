@@ -1,5 +1,6 @@
 package me.summerbell.muckit.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import javax.persistence.*;
@@ -9,25 +10,31 @@ import java.util.List;
 @Entity
 @Getter @Setter @EqualsAndHashCode(of = "id")
 @Builder @NoArgsConstructor @AllArgsConstructor
+@ToString(exclude = {"reviewList", "likeItList"})
 public class Restaurant {
 
     @Id @GeneratedValue
     @Column(name = "RESTAURANT_ID")
     private Long id;
 
+    private String addressName;
+
     private String kakaoId;
-
-    private String place_name;
-
-    private String place_url;
 
     private String phone;
 
-    private Double longitude;
+    private String placeName;
 
-    private Double latitude;
+    private String placeUrl;
+
+    private String roadAddressName;
+
+    private String longitude;
+
+    private String latitude;
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<Review> reviewList = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant")

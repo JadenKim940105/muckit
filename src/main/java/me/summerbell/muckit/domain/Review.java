@@ -1,5 +1,6 @@
 package me.summerbell.muckit.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 
 import javax.persistence.*;
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter @Setter @EqualsAndHashCode(of = "id")
 @Builder @NoArgsConstructor @AllArgsConstructor
+@ToString(exclude = "restaurant")
 public class Review {
 
     @Id @GeneratedValue
@@ -15,6 +17,7 @@ public class Review {
     private Long id;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "RESTAURANT_PK")
     private Restaurant restaurant;
 
