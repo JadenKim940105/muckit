@@ -24,25 +24,35 @@ public class ReviewController {
         return ResponseEntity.badRequest().body("등록된 리뷰가 없습니다.");
     }
 
+    @ExceptionHandler
+    public ResponseEntity alreadyWrittenHandler(AlreadyWrittenException exception){
+        return ResponseEntity.badRequest().body(exception.getMessage());
+    }
+
     @GetMapping("/api/restaurant-review")
     public ResponseEntity getRestaurantReview(@RequestBody RestaurantDto restaurantDto){
 
         String kakaoId = restaurantDto.getKakao_id();
 
-        List<Review> review = reviewService.getReview(kakaoId);
+        List<ReviewDto> review = reviewService.getReview(kakaoId);
 
         return ResponseEntity.ok(review);
     }
 
-    // 최초 리뷰 생성의 경우
+    // 리뷰 생성의 경우
     @PostMapping("/api/restaurant-review")
     public ResponseEntity createRestaurantReview(@RequestBody RestaurantReviewVo vo, @CurrentUser Account account){
 
+        // 1. 최초 리뷰인지, 아닌지 확인
+        ReviewDto review = reviewService.createReview(vo, account);
+
+/*
         // 1. 해당 레스토랑 데이터를 DB에 저장한다.
         Restaurant savedRestaurant = reviewService.saveRestaurantInfo(vo);
 
         // 2. 리뷰를 생성해 추가한다.
         ReviewDto review = reviewService.createReview(savedRestaurant, vo, account);
+*/
 
         return ResponseEntity.ok(review);
     }
