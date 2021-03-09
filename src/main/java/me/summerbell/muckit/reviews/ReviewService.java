@@ -25,7 +25,7 @@ public class ReviewService {
 
     private final RestaurantRepository restaurantRepository;
 
-    private final S3StorageService s3StorageService;
+    private final StorageService s3StorageService;
 
     public List<ReviewDto> getReview(String restaurantKakaoId) {
         Optional<Restaurant> byKakaoId = restaurantRepository.findByKakaoId(restaurantKakaoId);
