@@ -30,9 +30,4 @@ public class AppConfig {
         return new RestTemplate();
     }
 
-    @Bean
-    public AmazonS3 amazonS3Client(){
-        return AmazonS3ClientBuilder.defaultClient();
-    }
-
 }
