@@ -27,6 +27,8 @@ public class Review {
 
     private String reviewContent;
 
+    private String imageUrl;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

@@ -1,23 +1,26 @@
 package me.summerbell.muckit.reviews;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import me.summerbell.muckit.accounts.auth.CurrentUser;
 import me.summerbell.muckit.domain.Account;
-import me.summerbell.muckit.domain.Restaurant;
-import me.summerbell.muckit.domain.Review;
-import me.summerbell.muckit.kakaosearchapi.dto.RestaurantDto;
 import me.summerbell.muckit.utils.vo.RestaurantReviewVo;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ObjectMapper objectMapper;
 
     @ExceptionHandler
     public ResponseEntity reviewErrorHandler(NoSuchElementException exception){
@@ -30,32 +33,32 @@ public class ReviewController {
     }
 
     @GetMapping("/api/restaurant-review")
-    public ResponseEntity getRestaurantReview(@RequestBody RestaurantDto restaurantDto){
+    public ResponseEntity getRestaurantReview(@RequestParam String restaurantKakaoId){
 
-        String kakaoId = restaurantDto.getKakao_id();
-
-        List<ReviewDto> review = reviewService.getReview(kakaoId);
+        List<ReviewDto> review = reviewService.getReview(restaurantKakaoId);
 
         return ResponseEntity.ok(review);
     }
 
-    // 리뷰 생성의 경우
-    @PostMapping("/api/restaurant-review")
-    public ResponseEntity createRestaurantReview(@RequestBody RestaurantReviewVo vo, @CurrentUser Account account){
+    @PostMapping(value = "/api/restaurant-review",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity createRestaurantReview(@RequestPart String reviewInfo,
+                                                 @RequestParam Optional<MultipartFile> uploadImage,
+                                                 @CurrentUser Account account){
 
-        // 1. 최초 리뷰인지, 아닌지 확인
-        ReviewDto review = reviewService.createReview(vo, account);
+        RestaurantReviewVo restaurantReviewVo = new RestaurantReviewVo();
+        try{
+            restaurantReviewVo = objectMapper.readValue(reviewInfo, RestaurantReviewVo.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
 
-/*
-        // 1. 해당 레스토랑 데이터를 DB에 저장한다.
-        Restaurant savedRestaurant = reviewService.saveRestaurantInfo(vo);
-
-        // 2. 리뷰를 생성해 추가한다.
-        ReviewDto review = reviewService.createReview(savedRestaurant, vo, account);
-*/
+        ReviewDto review = reviewService.createReview(restaurantReviewVo, uploadImage, account);
 
         return ResponseEntity.ok(review);
     }
+
+
 
     // todo 리뷰 추가하기 ( 이미 최초 리뷰가 있는 경우 )
 

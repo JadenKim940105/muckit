@@ -1,5 +1,8 @@
 package me.summerbell.muckit.config;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.modelmapper.ModelMapper;
@@ -25,6 +28,11 @@ public class AppConfig {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+
+    @Bean
+    public AmazonS3 amazonS3Client(){
+        return AmazonS3ClientBuilder.defaultClient();
     }
 
 }

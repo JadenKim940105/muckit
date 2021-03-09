@@ -34,7 +34,7 @@ class KakaoSearchControllerTest {
         .param("latitude", "37.498095"))
                 .andDo(print())
                 .andExpect(jsonPath("$[0].address_name").exists())
-                .andExpect(jsonPath("$[0].id").exists())
+                .andExpect(jsonPath("$[0].kakao_id").exists())
                 .andExpect(jsonPath("$[0].phone").exists())
                 .andExpect(jsonPath("$[0].place_name").exists())
                 .andExpect(jsonPath("$[0].place_url").exists())

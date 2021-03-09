@@ -1,6 +1,8 @@
 package me.summerbell.muckit.reviews;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import me.summerbell.muckit.accounts.AccountRepository;
+import me.summerbell.muckit.domain.Account;
 import me.summerbell.muckit.domain.Restaurant;
 import me.summerbell.muckit.domain.Review;
 import me.summerbell.muckit.kakaosearchapi.dto.RestaurantDto;
@@ -44,7 +46,11 @@ class ReviewControllerTest {
     private ReviewRepository reviewRepository;
 
     @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
     private WebApplicationContext ctx;
+
 
 
     @BeforeEach
@@ -53,6 +59,15 @@ class ReviewControllerTest {
                 .addFilters(new CharacterEncodingFilter("UTF-8", true))
                 .alwaysDo(print())
                 .build();
+
+        Account account = Account.builder()
+                .accountId("jaden")
+                .email("jaden@email.com")
+                .password("123123123")
+                .nickName("jaden")
+                .build();
+
+        Account savedAccount = accountRepository.save(account);
 
 
         Restaurant restaurant = new Restaurant();
@@ -70,15 +85,12 @@ class ReviewControllerTest {
         }
 
         Review review1 = new Review();
+        review1.setAccount(savedAccount);
         review1.setReviewContent("이집 맛있네요~");
         review1.setRestaurant(restaurant);
 
-        Review review2 = new Review();
-        review2.setReviewContent("이집 정말 맛집222");
-        review2.setRestaurant(restaurant);
 
         restaurant.addReview(review1);
-        restaurant.addReview(review2);
 
         restaurantRepository.save(restaurant);
     }
@@ -103,7 +115,7 @@ class ReviewControllerTest {
 
         mockMvc.perform(get("/api/restaurant-review")
                 .contentType(MediaType.APPLICATION_JSON+";charset=UTF-8")
-        .content(objectMapper.writeValueAsString(restaurantDto)))
+                .content(objectMapper.writeValueAsString(restaurantDto)))
                 .andExpect(status().isOk());
     }
 
@@ -132,12 +144,9 @@ class ReviewControllerTest {
                 .andExpect(status().isBadRequest());
     }
 /*
-
     @DisplayName("최초리뷰 생성하기")
     @Test
-
     void create_first_review() throws Exception{
-
         RestaurantReviewVo restaurantReviewVo = RestaurantReviewVo.builder()
                 .address_name("서울 강남구 역삼동 824-29")
                 .kakao_id("000")
@@ -149,16 +158,14 @@ class ReviewControllerTest {
                 .latitude("37.49739976085793")
                 .reviewContent("첫 리뷰!!!")
                 .build();
-
-
-
         mockMvc.perform(post("/api/restaurant-review")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(restaurantReviewVo)))
                 .andExpect(status().isOk());
     }
-
 */
+
+
 
 
 

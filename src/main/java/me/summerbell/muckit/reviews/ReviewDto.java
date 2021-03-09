@@ -13,4 +13,6 @@ public class ReviewDto {
 
     private String reviewContent;
 
+    private String imageUrl;
+
 }

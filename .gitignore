@@ -34,4 +34,4 @@ build/
 
 
 ### applciation.properties ###
-application.properties
+*.properties

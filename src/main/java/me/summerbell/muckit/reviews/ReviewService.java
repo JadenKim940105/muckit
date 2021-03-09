@@ -1,6 +1,5 @@
 package me.summerbell.muckit.reviews;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import me.summerbell.muckit.domain.Account;
 import me.summerbell.muckit.domain.Restaurant;
@@ -9,6 +8,7 @@ import me.summerbell.muckit.restaurants.RestaurantRepository;
 import me.summerbell.muckit.utils.vo.RestaurantReviewVo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ public class ReviewService {
 
     private final RestaurantRepository restaurantRepository;
 
-    private final ObjectMapper objectMapper;
+    private final S3StorageService s3StorageService;
 
     public List<ReviewDto> getReview(String restaurantKakaoId) {
         Optional<Restaurant> byKakaoId = restaurantRepository.findByKakaoId(restaurantKakaoId);
@@ -38,6 +38,7 @@ public class ReviewService {
             ReviewDto reviewDto = ReviewDto.builder()
                     .nickName(reviewList.get(i).getAccount().getNickName())
                     .reviewContent(reviewList.get(i).getReviewContent())
+                    .imageUrl(reviewList.get(i).getImageUrl())
                     .build();
             reviewDtoList.add(reviewDto);
         }
@@ -64,44 +65,47 @@ public class ReviewService {
         return restaurant;
     }
 
-    public ReviewDto createReview(Restaurant restaurant, RestaurantReviewVo vo, Account account) {
-        Optional<Review> alreadyWrittenReview = reviewRepository.findByAccount(account);
+    public ReviewDto createReview(RestaurantReviewVo vo, Optional<MultipartFile> uploadImage, Account account) {
+        // 1. 최초 리뷰인지 아닌지 확인
+        String kakaoId = vo.getKakao_id();
+        Optional<Restaurant> restaurant = restaurantRepository.findByKakaoId(kakaoId);
+        if(restaurant.isEmpty()){      // 저장된 레스토랑 정보가 없음 == 최초 리뷰.
+            Restaurant newRestaurant = saveRestaurantInfo(vo);  // 레스토랑 DB 에 저장
+            return createReview(newRestaurant, vo, uploadImage, account);
+        } else {
+            return createReview(restaurant.get(), vo, uploadImage, account);
+        }
+    }
+
+    private ReviewDto createReview(Restaurant restaurant, RestaurantReviewVo vo, Optional<MultipartFile> uploadImage, Account account) {
+        Optional<Review> alreadyWrittenReview = reviewRepository.findByAccountAndRestaurant(account, restaurant);
+
 
         if(alreadyWrittenReview.isPresent()){
             throw new AlreadyWrittenException("리뷰를 중복해서 남기실 수 없습니다.");
         }
 
 
+        String imageUrl = null;
+        if(uploadImage.isPresent()){
+            imageUrl = s3StorageService.uploadFile(uploadImage.get());
+        }
+
         Review newReview = Review.builder()
                 .account(account)
                 .reviewContent(vo.getReviewContent())
                 .restaurant(restaurant)
                 .createdAt(LocalDateTime.now())
+                .imageUrl(imageUrl)
                 .build();
 
         Review savedReview = reviewRepository.save(newReview);
 
-        ReviewDto responseReviewDto = ReviewDto.builder()
+
+        return ReviewDto.builder()
                 .nickName(savedReview.getAccount().getNickName())
                 .reviewContent(savedReview.getReviewContent())
+                .imageUrl(savedReview.getImageUrl())
                 .build();
-
-
-        return responseReviewDto;
-    }
-
-
-    public ReviewDto createReview(RestaurantReviewVo vo, Account account) {
-        // 1. 최초 리뷰인지 아닌지 확인
-        String kakaoId = vo.getKakao_id();
-        Optional<Restaurant> restaurant = restaurantRepository.findByKakaoId(kakaoId);
-        if(restaurant.isEmpty()){      // 저장된 레스토랑 정보가 없음 == 최초 리뷰.
-            Restaurant newRestaurant = saveRestaurantInfo(vo);
-            ReviewDto review = createReview(newRestaurant, vo, account);
-            return review;
-        } else {
-            ReviewDto review = createReview(restaurant.get(), vo, account);
-            return review;
-        }
     }
 }
