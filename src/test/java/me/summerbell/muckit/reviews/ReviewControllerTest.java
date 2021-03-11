@@ -94,7 +94,7 @@ class ReviewControllerTest {
 
         restaurantRepository.save(restaurant);
     }
-
+/*
     @DisplayName("입력받은 레스토랑의 리뷰가 존재하는 경우")
     @Test
     @WithMockUser
@@ -116,7 +116,7 @@ class ReviewControllerTest {
         mockMvc.perform(get("/api/restaurant-review")
                 .contentType(MediaType.APPLICATION_JSON+";charset=UTF-8")
                 .content(objectMapper.writeValueAsString(restaurantDto)))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
     }
 
 
@@ -143,7 +143,7 @@ class ReviewControllerTest {
                 .content(objectMapper.writeValueAsString(restaurantDto)))
                 .andExpect(status().isBadRequest());
     }
-/*
+
     @DisplayName("최초리뷰 생성하기")
     @Test
     void create_first_review() throws Exception{

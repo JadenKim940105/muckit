@@ -3,6 +3,7 @@ package me.summerbell.muckit.reviews;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import me.summerbell.muckit.accounts.auth.CurrentUser;
 import me.summerbell.muckit.domain.Account;
 import me.summerbell.muckit.utils.vo.RestaurantReviewVo;
@@ -17,6 +18,7 @@ import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewController {
 
     private final ReviewService reviewService;
@@ -46,6 +48,10 @@ public class ReviewController {
                                                  @RequestParam Optional<MultipartFile> uploadImage,
                                                  @CurrentUser Account account){
 
+        // ios 로 배열밖에 넘기지 못해, 값 변환
+        reviewInfo = reviewInfoConvert(reviewInfo);
+
+
         RestaurantReviewVo restaurantReviewVo = new RestaurantReviewVo();
         try{
             restaurantReviewVo = objectMapper.readValue(reviewInfo, RestaurantReviewVo.class);
@@ -56,6 +62,12 @@ public class ReviewController {
         ReviewDto review = reviewService.createReview(restaurantReviewVo, uploadImage, account);
 
         return ResponseEntity.ok(review);
+    }
+
+    private String reviewInfoConvert(String reviewInfo){
+        reviewInfo = reviewInfo.replace("[", "{");
+        reviewInfo = reviewInfo.replace("]","}");
+        return reviewInfo;
     }
 
 
