@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import me.summerbell.muckit.accounts.auth.CurrentUser;
 import me.summerbell.muckit.domain.Account;
 import me.summerbell.muckit.utils.vo.RestaurantReviewVo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,14 +40,9 @@ public class ReviewController {
     }
 
     @GetMapping("/api/restaurant-review")
-    public ResponseEntity<Result> getRestaurantReview(@RequestParam String restaurantKakaoId){
+    public Page<ReviewDto> getRestaurantReview(@RequestParam String restaurantKakaoId, Pageable pageable){
 
-        List<ReviewDto> review = reviewService.getReview(restaurantKakaoId);
-        Result result = new Result(review);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(new MediaType(MediaType.APPLICATION_JSON));
-
-        return new ResponseEntity<>(result, headers, HttpStatus.OK);
+        return reviewService.getReview(restaurantKakaoId, pageable);
     }
 
     @PostMapping(value = "/api/restaurant-review",

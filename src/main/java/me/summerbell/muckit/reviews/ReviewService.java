@@ -6,6 +6,8 @@ import me.summerbell.muckit.domain.Restaurant;
 import me.summerbell.muckit.domain.Review;
 import me.summerbell.muckit.restaurants.RestaurantRepository;
 import me.summerbell.muckit.utils.vo.RestaurantReviewVo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,23 +29,13 @@ public class ReviewService {
 
     private final StorageService s3StorageService;
 
-    public List<ReviewDto> getReview(String restaurantKakaoId) {
-        Optional<Restaurant> byKakaoId = restaurantRepository.findByKakaoId(restaurantKakaoId);
-        byKakaoId.orElseThrow(NoSuchElementException::new);
-        List<Review> reviewList = byKakaoId.get().getReviewList();
+    public Page<ReviewDto> getReview(String restaurantKakaoId, Pageable pageable) {
+        Optional<Restaurant> findRestaurant = restaurantRepository.findByKakaoId(restaurantKakaoId);
+        findRestaurant.orElseThrow(NoSuchElementException::new);
 
-        // todo 성능최적화할 방법 생각해보기..
-        List<ReviewDto> reviewDtoList = new ArrayList<>();
-        for(int i = 0; i < reviewList.size(); i++){
-            ReviewDto reviewDto = ReviewDto.builder()
-                    .nickName(reviewList.get(i).getAccount().getNickName())
-                    .reviewContent(reviewList.get(i).getReviewContent())
-                    .imageUrl(reviewList.get(i).getImageUrl())
-                    .build();
-            reviewDtoList.add(reviewDto);
-        }
+        Page<Review> reviews = reviewRepository.findByRestaurant(findRestaurant.get(), pageable);
 
-        return reviewDtoList;
+        return reviews.map(r -> new ReviewDto(r.getAccount().getNickName(), r.getReviewContent(), r.getImageUrl()));
     }
 
     public Restaurant saveRestaurantInfo(RestaurantReviewVo vo) {
