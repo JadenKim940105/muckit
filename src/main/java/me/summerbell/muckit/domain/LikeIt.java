@@ -6,7 +6,8 @@ import javax.persistence.*;
 
 @Entity
 @Getter @Setter @EqualsAndHashCode(of = "id")
-@Builder @NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 @ToString(exclude = {"restaurant"})
 public class LikeIt {
 

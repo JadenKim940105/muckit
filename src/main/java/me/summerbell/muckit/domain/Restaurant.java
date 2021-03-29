@@ -1,5 +1,6 @@
 package me.summerbell.muckit.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
@@ -38,8 +39,10 @@ public class Restaurant {
     private List<Review> reviewList = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant")
+    @JsonIgnore
     private List<LikeIt> likeItList = new ArrayList<>();
 
+    // todo Review 가 관계의 주인.. 확인 후 현재 코드삭제
     public void addReview(Review review) {
         this.getReviewList().add(review);
         review.setRestaurant(this);
